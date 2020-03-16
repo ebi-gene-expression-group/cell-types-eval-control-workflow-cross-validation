@@ -1,0 +1,10 @@
+name: r-caret
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - r-caret
+  - r-optparse 
+  - r-workflowscriptscommon 
+  - bioconductor-singlecellexperiment=1.6.0
