@@ -42,11 +42,6 @@ barcodes <- read.table(file=opt$input_barcodes_tsv, sep = "\t", header=T)
 suppressPackageStartupMessages(require(caret))
 #list of folds with cell indexes
 barcodes_index_list <- createFolds(y = 1:nrow(barcodes), k = opt$k_folds_number)
-#list of folds with cell names
-#cell_labels_list <- lapply(cell_index_list, function(x) colnames(sce)[x])
-#save list of cell labels folds in rds format
 print(barcodes_index_list)
-#saveRDS(barcodes_index_list, file=opt$output_cell_indexes)
-#save each of the cell indexes folds as RDS file
-#lapply(barcodes_index_list, saveRDS, opt$output_cell_indexes)
-for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file= opt$output_cell_indexes)}
+
+for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file= paste0("index.Fold_", i, ".", opt$output_cell_indexes))}
