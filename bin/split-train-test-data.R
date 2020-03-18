@@ -97,8 +97,8 @@ write.table(train_barcodes, file = paste0(opt$output_train_dir,"barcodes.tsv"), 
 write.table(features, file = paste0(opt$output_test_dir,"features.tsv"), sep = "\t", quote = F, col.names = F)
 write.table(features, file = paste0(opt$output_train_dir,"features.tsv"), sep = "\t", quote = F, col.names = F)
 #save metadata (SDRF file)
-write.table(test_sdrf, file =  paste0(opt$output_test_dir,"test_sdrf.tsv"), sep = "\t", quote = F, col.names = T)
-write.table(train_sdrf, file = paste0(opt$output_train_dir,"train_sdrf.tsv"), sep = "\t", quote = F, col.names = T)
+write.table(test_sdrf, file =  "test_sdrf.tsv", sep = "\t", quote = F, col.names = T)
+write.table(train_sdrf, file = "train_sdrf.tsv", sep = "\t", quote = F, col.names = T)
 
 ##save TEST Matrices and Barcodes
 #mapply(function(X, Y){writeMM(X, file=paste0(opt$output_test_dir, ".", Y, ".matrix.mtx"))}, X= test_mat_list, Y=as.list(names(test_mat_list)))
