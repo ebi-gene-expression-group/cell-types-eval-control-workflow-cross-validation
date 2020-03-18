@@ -22,7 +22,7 @@ process generate_folds{
 
     script:
     """
-        zipdir=\$(unzip -qql $matrix | head -n1 | tr -s ' ' | cut -d' ' -f5- | sed 's|/||')
+        zipdir=\$(unzip -qql $matrix | head -n1 | tr -s ' ' | cut -d' ' -f5- | sed 's|/.*||')
         unzip -p $matrix \${zipdir}/barcodes.tsv > barcodes.tsv
         
         caret-create-folds.R\
@@ -54,7 +54,7 @@ process split_train_test{
         set val(fold), file("test.zip"), file("train.zip") into SPLIT_DATA 
     
     """
-    zipdir=\$(unzip -qql $matrix | head -n1 | tr -s ' ' | cut -d' ' -f5- | sed 's|/||')
+    zipdir=\$(unzip -qql $matrix | head -n1 | tr -s ' ' | cut -d' ' -f5- | sed 's|/.*||')
     unzip $matrix
     
     split-train-test-data.R\
