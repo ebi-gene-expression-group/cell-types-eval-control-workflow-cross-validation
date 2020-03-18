@@ -87,15 +87,19 @@ train_matrix <- input_matrix[, train_cell_indexes]
 train_barcodes <- data.frame(barcodes[train_cell_indexes, ]) 
 train_sdrf <- data.frame(sdrf[train_cell_indexes, ])
 
+# Make output directories
+dir.create('test')
+dir.create('train')
+
 #save matrices
-writeMM(test_matrix, file = paste0(opt$output_test_dir,"matrix.mtx"))
-writeMM(train_matrix, file = paste0(opt$output_train_dir,"matrix.mtx"))
+writeMM(test_matrix, file = file.path(opt$output_test_dir,"matrix.mtx"))
+writeMM(train_matrix, file = file.path(opt$output_train_dir,"matrix.mtx"))
 #save barcodes
-write.table(test_barcodes, file = paste0(opt$output_test_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
-write.table(train_barcodes, file = paste0(opt$output_train_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
+write.table(test_barcodes, file = file.path(opt$output_test_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
+write.table(train_barcodes, file = file.path(opt$output_train_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
 #save features
-write.table(features, file = paste0(opt$output_test_dir,"features.tsv"), sep = "\t", quote = F, col.names = F)
-write.table(features, file = paste0(opt$output_train_dir,"features.tsv"), sep = "\t", quote = F, col.names = F)
+write.table(features, file = file.path(opt$output_test_dir,"genes.tsv"), sep = "\t", quote = F, col.names = F)
+write.table(features, file = file.path(opt$output_train_dir,"genes.tsv"), sep = "\t", quote = F, col.names = F)
 #save metadata (SDRF file)
 write.table(test_sdrf, file =  "test_sdrf.tsv", sep = "\t", quote = F, col.names = T)
 write.table(train_sdrf, file = "train_sdrf.tsv", sep = "\t", quote = F, col.names = T)
