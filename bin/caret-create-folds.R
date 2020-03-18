@@ -21,7 +21,7 @@ option_list = list(
     help = 'Number of groups to split the data in.'
   ), 
   make_option(
-    c("-o", "--output-cell-indexes"),
+    c("-o", "--output-dir"),
     action = "store",
     default = NA,
     type = 'character',
@@ -29,7 +29,7 @@ option_list = list(
   )
 )
 
-opt = wsc_parse_args(option_list, mandatory = c("input_barcodes_tsv", "output_cell_indexes"))
+opt = wsc_parse_args(option_list, mandatory = c("input_barcodes_tsv", "output_dir"))
 
 #read SCE object
 if(!file.exists(opt$input_barcodes_tsv)) stop("Input file does not exist.")
@@ -44,4 +44,5 @@ suppressPackageStartupMessages(require(caret))
 barcodes_index_list <- createFolds(y = 1:nrow(barcodes), k = opt$k_folds_number)
 print(barcodes_index_list)
 
-for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file= paste0("index.Fold_", i, ".", opt$output_cell_indexes))}
+dir.create(opt$output_dir)
+for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, i))}
