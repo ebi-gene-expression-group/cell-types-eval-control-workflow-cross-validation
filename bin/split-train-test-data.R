@@ -19,7 +19,7 @@ option_list = list(
     action = "store",
     default = NA,
     type = 'character',
-    help = 'Path to the input cell indexes to perform test/train data subseting'
+    help = 'Path to the input cell indexes to perform test/train data subseting.'
   ),
   make_option(
     c("-b", "--input-barcodes-tsv"),
@@ -29,11 +29,11 @@ option_list = list(
     help = 'Path to the barcodes tsv to subset based on input_cell_indexes.'
   ),
   make_option(
-    c("-f", "--input-features-tsv"),
+    c("-f", "--input-genes-tsv"),
     action = "store",
     default = NA,
     type = 'character',
-    help = 'Path to the features tsv.'
+    help = 'Path to the genes tsv.'
   ),
   make_option(
     c("-s", "--input-processed-sdrf"),
@@ -47,38 +47,39 @@ option_list = list(
     action = "store",
     default = 'test',
     type = 'character',
-    help = "Name the test matrix split." #where cell identity will be inferred based on the model generated over train sce split."
+    help = "Name the test matrix split." 
   ),
  make_option(
     c("-t", "--output-train-dir"),
     action = "store",
     default = 'train',
     type = 'character',
-    help = "Name of the train matrix split." #where the the model for inferring cell identity will be generated."
+    help = "Name of the train matrix split." 
   )
 )
 
-opt = wsc_parse_args(option_list, mandatory = c("input_matrix", "input_cell_indexes","input_barcodes_tsv", "input_features_tsv", "input_processed_sdrf"))
+opt = wsc_parse_args(option_list, mandatory = c("input_matrix", "input_cell_indexes","input_barcodes_tsv", "input_genes_tsv", "input_processed_sdrf"))
 
-#read 10X sparse matrix
+# read 10X sparse matrix
 suppressPackageStartupMessages(require(Matrix))
 if(!file.exists(opt$input_matrix)) stop("Input 10X matrix file not provided.")
 input_matrix <- readMM(opt$input_matrix)
-#read input cell indexes 
+# read input cell indexes 
 if(!file.exists(opt$input_cell_indexes)) stop("Input cell labels file does not exist.")
 test_cell_indexes <- readRDS(opt$input_cell_indexes)
-#read input barcodes 
+# read input barcodes 
 if(!file.exists(opt$input_barcodes_tsv)) stop("Input barcodes file does not exist.")
 barcodes <- read.table(opt$input_barcodes_tsv, header = F, sep = "\t", quote = "")
-#read input features 
-if(!file.exists(opt$input_features_tsv)) stop("Input features file does not exist.")
-features <- read.table(opt$input_features_tsv, header = F, sep = "\t", quote = "")
-#read input processd srdf 
+# read input genes 
+if(!file.exists(opt$input_genes_tsv)) stop("Input genes file does not exist.")
+genes <- read.table(opt$input_genes_tsv, header = F, sep = "\t", quote = "")
+# read input processd srdf 
 if(!file.exists(opt$input_processed_sdrf)) stop("Input sdrf file does not exist.")
-sdrf <- read.table(opt$input_processed_sdrf, header = F, sep = "\t", quote = "")
+sdrf <- read.table(opt$input_processed_sdrf, header = T, sep = "\t", quote = "")
+
 train_cell_indexes <- c(1:ncol(input_matrix))[!(1:ncol(input_matrix) %in% test_cell_indexes)]
 
-#split data into test and train sets
+# split data into test and train sets
 test_matrix <- input_matrix[, test_cell_indexes]
 test_barcodes <- data.frame(barcodes[test_cell_indexes, ])
 test_sdrf <- data.frame(sdrf[ test_cell_indexes, ])
@@ -91,18 +92,15 @@ train_sdrf <- data.frame(sdrf[train_cell_indexes, ])
 dir.create('test')
 dir.create('train')
 
-#save matrices
+# save matrices
 writeMM(test_matrix, file = file.path(opt$output_test_dir,"matrix.mtx"))
 writeMM(train_matrix, file = file.path(opt$output_train_dir,"matrix.mtx"))
-#save barcodes
-write.table(test_barcodes, file = file.path(opt$output_test_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
-write.table(train_barcodes, file = file.path(opt$output_train_dir,"barcodes.tsv"), sep = "\t", quote = F, col.names = F)
-#save features
-write.table(features, file = file.path(opt$output_test_dir,"genes.tsv"), sep = "\t", quote = F, col.names = F)
-write.table(features, file = file.path(opt$output_train_dir,"genes.tsv"), sep = "\t", quote = F, col.names = F)
-#save metadata (SDRF file)
-write.table(test_sdrf, file =  "test_sdrf.tsv", sep = "\t", quote = F, col.names = T)
-write.table(train_sdrf, file = "train_sdrf.tsv", sep = "\t", quote = F, col.names = T)
-
-##save TEST Matrices and Barcodes
-#mapply(function(X, Y){writeMM(X, file=paste0(opt$output_test_dir, ".", Y, ".matrix.mtx"))}, X= test_mat_list, Y=as.list(names(test_mat_list)))
+# save barcodes
+write.table(test_barcodes, file = file.path(opt$output_test_dir,"barcodes.tsv"), sep = "\t", quote = F, row.names=F , col.names = F)
+write.table(train_barcodes, file = file.path(opt$output_train_dir,"barcodes.tsv"), sep = "\t", quote = F, row.names=F , col.names = F)
+# save genes
+write.table(genes, file = file.path(opt$output_test_dir,"genes.tsv"), sep = "\t", quote = F, row.names=F , col.names = F)
+write.table(genes, file = file.path(opt$output_train_dir,"genes.tsv"), sep = "\t", quote = F, row.names=F , col.names = F)
+# save metadata 
+write.table(test_sdrf, file = file.path(opt$output_test_dir,"test_sdrf.tsv"), sep = "\t", quote = F,  row.names=F )
+write.table(train_sdrf, file = file.path(opt$output_train_dir,"train_sdrf.tsv"), sep = "\t", quote = F,  row.names=F )

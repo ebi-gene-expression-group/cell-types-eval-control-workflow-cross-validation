@@ -1,4 +1,4 @@
-name: nextflow
+name: nextflow=20.01.0
 channels:
   - bioconda
   - conda-forge

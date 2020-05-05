@@ -31,18 +31,14 @@ option_list = list(
 
 opt = wsc_parse_args(option_list, mandatory = c("input_barcodes_tsv", "output_dir"))
 
-#read SCE object
+# read SCE object
 if(!file.exists(opt$input_barcodes_tsv)) stop("Input file does not exist.")
-#sce <- readRDS(opt$input_sce_object)
 barcodes <- read.table(file=opt$input_barcodes_tsv, sep = "\t", header=T)
-#if object has no colnames, append them
-#if(is.null(colnames(sce))) colnames(sce) <- sce$Barcode
-
-#create Folds with cell indexes
+# create Folds with cell indexes
 suppressPackageStartupMessages(require(caret))
-#list of folds with cell indexes
+# list of folds with cell indexes
 barcodes_index_list <- createFolds(y = 1:nrow(barcodes), k = opt$k_folds_number)
 print(barcodes_index_list)
-
+# save fold's barcode indices
 dir.create(opt$output_dir)
-for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, i))}
+for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, paste0("Fold_", i, ".rds")))}
