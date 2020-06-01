@@ -77,6 +77,10 @@ genes <- read.table(opt$input_genes_tsv, header = F, sep = "\t", quote = "")
 if(!file.exists(opt$input_processed_sdrf)) stop("Input sdrf file does not exist.")
 sdrf <- read.table(opt$input_processed_sdrf, header = T, sep = "\t", quote = "")
 
+
+# order sdrf file with barcodes.tsv file order
+sdrf <- sdrf[order(match(sdrf[,"id"], barcodes[,1]), decreasing = F), ]
+# generate train indexes
 train_cell_indexes <- c(1:ncol(input_matrix))[!(1:ncol(input_matrix) %in% test_cell_indexes)]
 
 # split data into test and train sets

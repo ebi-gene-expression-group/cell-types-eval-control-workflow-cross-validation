@@ -8,7 +8,9 @@ A k-fold cross validation workflow for evaluation of cell type classification to
 * [label-analysis-eval-workflow](https://github.com/ebi-gene-expression-group/label-analysis-eval-workflow)
 
 Workflow diagram:
+
 ![](https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/blob/feature/integrate_celltypes_workflow/cross-validation-pipeline.png)
+
 
 ### Pipeline configuration
 This workflow currently allows for the configuration of the number of folds to split the input data under the `k_folds_num` parameter.
@@ -31,4 +33,4 @@ Finally, to run the pipeline run:
 nextflow run main.nf --profile cluster
 ```
 ### Results
-The output of the pipeline is a folds' average performance table that will be located in `data/cross_val_output/` directory. 
+The output of the pipeline is a folds' average performance table that will be located in the output directory. 

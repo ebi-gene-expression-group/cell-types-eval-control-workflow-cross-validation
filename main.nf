@@ -3,9 +3,9 @@
 // Workflow to perform k-fold cross validation over a downloaded dataset (via accession id) or an input dataset
 
 // download query data
-if(params.data_download.run == "True"){
-    query_data = params.data_download.query_output_dir
-    query_n_clust = params.data_download.query_num_clust.toString()
+if(params.download_data.run == "True"){
+    query_data = params.download_data.query_output_dir
+    query_n_clust = params.download_data.query_num_clust.toString()
     query_markers = "marker_genes_" + query_n_clust + ".tsv"
 
 process fetch_query_data{
@@ -21,13 +21,13 @@ process fetch_query_data{
 	file("${query_data}/query_${query_markers}") into MARKERS
 	"""
 	get_experiment_data.R\
-		--accesssion-code ${params.data_download.query_acc_code}\
-		--expr-data-type ${params.data_download.expr_data_type}\
-		--normalisation-method ${params.data_download.normalisation_method}\
-		--output-dir-name ${params.data_download.query_output_dir}\
+		--accesssion-code ${params.download_data.query_acc_code}\
+		--expr-data-type ${params.download_data.expr_data_type}\
+		--normalisation-method ${params.download_data.normalisation_method}\
+		--output-dir-name ${params.download_data.query_output_dir}\
 		--get-condensed-sdrf\
 		--get-marker-genes\
-		--number-of-clusters ${params.data_download.query_num_clust}
+		--number-of-clusters ${params.download_data.query_num_clust}
 	# rename files to avoid name collisions in subsequent processes
 	mv ${query_data}/10x_data ${query_data}/query_10x_data
 	mv ${query_data}/condensed-sdrf.tsv ${query_data}/query_sdrf.txt
@@ -35,6 +35,12 @@ process fetch_query_data{
 	"""
     }
     
+}else{
+	QUERY_10X_DIR = Channel.fromPath(params.data_10X, checkIfExists: true).first()
+	CONDENSED_SDRF = Channel.fromPath(params.condensed_sdrf, checkIfExists: true).first()
+	MARKERS = Channel.fromPath(params.markers_metadata, checkIfExists: true).first()
+}	
+
 // condensed sdrf files need 'un-melting' 
 process unmelt_sdrf_query {
 	conda "${baseDir}/envs/exp_metadata.yaml"
@@ -47,15 +53,10 @@ process unmelt_sdrf_query {
 	unmelt_condensed.R\
 		-i ${condensed_sdrf}\
 		-o query_metadata.tsv\
-		--retain-types\
+		--retain-types ${params.unmelt_sdrf.retain_types}\
 		--has-ontology                 
 	"""
 	}
-}else{
-	QUERY_10X_DIR = Channel.fromPath(params.data_10X).first()
-	UNMELTED_SDRF = Channel.fromPath(params.sdrf_processed).first()
-	MARKERS = Channel.fromPath(params.markers_metadata).first()
-}	
 
 // generate folds of cell indices for cross validation
 process generate_folds{
@@ -84,7 +85,7 @@ K_FOLD_CELL_INDEXES
 	
 // split data into train and test sets based on indices
 process split_train_test{
-	publishDir "${params.output_dir}/Split_data", mode: 'copy'
+	//publishDir "${params.output_dir}/split_data", mode: 'copy'
 	conda "${baseDir}/envs/r-caret.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }
 	maxRetries 5
@@ -113,10 +114,11 @@ process split_train_test{
 
 // Run cell-types-eval-control-workflow which runs the predictor tools
 process run_cell_types_eval {
-	publishDir "${params.output_dir}/Label_analysis/$fold", mode: 'copy'
+	publishDir "${params.output_dir}/label_analysis", mode: 'copy'
 	conda "${baseDir}/envs/nextflow.yaml"
-	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }   
-	maxRetries 5
+	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  || task.attempt < 3  ? 'retry' : 'finish' }   
+	maxRetries 3
+	maxForks 1 
 	memory { 16.GB * task.attempt }
 	
 	input:
@@ -135,14 +137,14 @@ process run_cell_types_eval {
 	RESULTS_DIR="\$PWD"
 	
 	nextflow run $CONTROL_WORKFLOW/main.nf\
-	    -resume\
-	    -profile cluster\
-	    --label_analysis_outdir \$RESULTS_DIR\
-	    --cv_ref_10x_dir \${train_zipdir}\
-	    --cv_query_10x_dir \${test_zipdir}\
-	    --cv_unmelt_sdrf_ref \${train_sdrf}\
-	    --cv_unmelt_sdrf_query \${test_sdrf}\
-	    --cv_ref_markers ${marker_genes}
+		-profile ${params.profile}\
+		-c "${baseDir}/nextflow.config"\
+		--label_analysis_outdir \$RESULTS_DIR\
+		--ref_10x_dir \${train_zipdir}\
+		--query_10x_dir \${test_zipdir}\
+		--unmelt_sdrf_ref \${train_sdrf}\
+		--unmelt_sdrf_query \${test_sdrf}\
+		--ref_markers ${marker_genes}
 	"""
 } 
 
@@ -151,6 +153,8 @@ OUT_CH = TOOL_PERF_TABLE.join(TOOL_TABLE_PVALS)
 
 // rename files to include fold number
 process rename_results{
+	publishDir "${params.output_dir}/${fold}", mode: 'copy'
+  
 	input:
 	set val(fold), file(tool_perf_table), file(tool_perf_pvals) from OUT_CH
 	output:
@@ -181,7 +185,7 @@ process combine_results{
 
 // average folds output
 process average_folds_output {
-	publishDir "${params.output_dir}/Final_output", mode: 'copy'
+	publishDir "${params.output_dir}/final_output", mode: 'copy'
 	conda "${baseDir}/envs/r-caret.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }   
 	maxRetries 5
