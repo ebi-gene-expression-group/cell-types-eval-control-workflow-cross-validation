@@ -21,6 +21,13 @@ option_list = list(
     help = 'Number of groups to split the data in.'
   ), 
   make_option(
+    c("-d", "--dataset-id"),
+    action = "store",
+    default = NA,
+    type = 'character',
+    help = 'Dataset ID of the dataset used'
+  ), 
+  make_option(
     c("-o", "--output-dir"),
     action = "store",
     default = NA,
@@ -41,4 +48,4 @@ barcodes_index_list <- createFolds(y = 1:nrow(barcodes), k = opt$k_folds_number)
 print(barcodes_index_list)
 # save fold's barcode indices
 dir.create(opt$output_dir)
-for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, paste0("Fold_", i, ".rds")))}
+for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, paste0(opt$dataset_id, "_fold_", i, ".rds")))}

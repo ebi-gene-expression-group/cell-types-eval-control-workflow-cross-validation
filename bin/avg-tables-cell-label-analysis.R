@@ -14,22 +14,29 @@ option_list = list(
     help = 'Diectory path to output of previous processes where files are stored by Fold.'
   ),
   make_option(
-    c("-a", "--avg-tool-perf-table"),
+    c("-d", "--dataset-id"),
     action = "store",
     default = NA,
+    type = 'character',
+    help = 'Dataset ID of the dataset used'
+  ), 
+  make_option(
+    c("-a", "--avg-tool-perf-table"),
+    action = "store",
+    default = "avg_tool_perf_table.tsv",
     type = 'character',
     help = 'Cross-fold averaged tool performance table.'
   ),
   make_option(
     c("-v", "--avg-tool-perf-pvals"),
     action = "store",
-    default = NA,
+    default = "avg_tool_perf_pvals.tsv",
     type = 'character',
     help = 'Cross-fold averaged tool p values table.'
   )
 )
 
-opt = wsc_parse_args(option_list, mandatory = c("input_dir", "avg_tool_perf_table", "avg_tool_perf_pvals"))
+opt = wsc_parse_args(option_list, mandatory = c("input_dir"))
 
 if(!file.exists(opt$input_dir)) stop("Input directory containing label-analysis outputs does not exist.")
 
@@ -50,5 +57,6 @@ mean_tool_perf_pvals <- aggregate(x = subset(merge_tool_perf_pvals, select = -c(
 colnames(mean_tool_perf_tables) <- replace(colnames(mean_tool_perf_tables), c(1), c("Tool"))
 colnames(mean_tool_perf_pvals) <- replace(colnames(mean_tool_perf_pvals), c(1), c("Tool"))
 #save tables
-write.table(mean_tool_perf_tables, file=opt$avg_tool_perf_table, sep = "\t")
-write.table(mean_tool_perf_pvals, file=opt$avg_tool_perf_pvals, sep = "\t")
+
+write.table(mean_tool_perf_tables, file=paste0(opt$dataset_id, "_", opt$avg_tool_perf_table), sep = "\t")
+write.table(mean_tool_perf_pvals, file=paste0(opt$dataset_id, "_", opt$avg_tool_perf_pvals), sep = "\t")

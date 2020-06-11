@@ -135,7 +135,12 @@ process run_cell_types_eval {
 	unzip $train
 	train_sdrf=\${train_zipdir}/train_sdrf.tsv\
 	RESULTS_DIR="\$PWD"
-	
+  
+	# launch develop branch from control workflow	
+	pushd $CONTROL_WORKFLOW > /dev/null
+	git checkout develop > /dev/null
+	popd > /dev/null
+
 	nextflow run $CONTROL_WORKFLOW/main.nf\
 		-profile ${params.profile}\
 		-c "${baseDir}/nextflow.config"\
