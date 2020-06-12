@@ -34,11 +34,13 @@ process fetch_query_data{
 	mv ${query_data}/${query_markers} ${query_data}/query_${query_markers}
 	"""
     }
-    
+  
+	DATASET_ID = Channel.from(params.download_data.query_acc_code).first() 
 }else{
 	QUERY_10X_DIR = Channel.fromPath(params.data_10X, checkIfExists: true).first()
 	CONDENSED_SDRF = Channel.fromPath(params.condensed_sdrf, checkIfExists: true).first()
 	MARKERS = Channel.fromPath(params.markers_metadata, checkIfExists: true).first()
+	DATASET_ID = Channel.from(params.dataset_id) 
 }	
 
 // condensed sdrf files need 'un-melting' 
@@ -60,21 +62,23 @@ process unmelt_sdrf_query {
 
 // generate folds of cell indices for cross validation
 process generate_folds{
-	publishDir "${params.output_dir}", mode: 'copy'
+	publishDir "${params.output_dir}/${dataset_id}", mode: 'copy'
 	conda "${baseDir}/envs/r-caret.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }
 	maxRetries 5
 	memory { 16.GB * task.attempt }
 	
 	input:
-	file(data_dir) from QUERY_10X_DIR 
+	file(data_dir) from QUERY_10X_DIR
+	val(dataset_id) from DATASET_ID 
 	output:
 	file("folds_indices/*") into K_FOLD_CELL_INDEXES 
 	"""
 	caret-create-folds.R\
 	        --input-barcodes-tsv "${data_dir}/barcodes.tsv"\
 	        --k-folds-number ${params.generate_folds.folds_k}\
-	        --output-dir folds_indices
+	        --dataset-id ${dataset_id}\
+		--output-dir folds_indices
 	"""
 }
 
@@ -85,7 +89,7 @@ K_FOLD_CELL_INDEXES
 	
 // split data into train and test sets based on indices
 process split_train_test{
-	//publishDir "${params.output_dir}/split_data", mode: 'copy'
+	//publishDir "${params.output_dir}/${dataset_id}/split_data", mode: 'copy'
 	conda "${baseDir}/envs/r-caret.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }
 	maxRetries 5
@@ -95,6 +99,7 @@ process split_train_test{
 	    set val(fold), file(k_fold_cell_indexes) from FOLDS_BY_K 
 	    file(data_dir) from QUERY_10X_DIR 
 	    file(sdrf) from UNMELTED_SDRF
+	    val(dataset_id) from DATASET_ID 
 	output:
 	    set val("${fold}"), file("test.zip"), file("train.zip") into SPLIT_DATA 
 	"""
@@ -114,7 +119,7 @@ process split_train_test{
 
 // Run cell-types-eval-control-workflow which runs the predictor tools
 process run_cell_types_eval {
-	publishDir "${params.output_dir}/label_analysis", mode: 'copy'
+	publishDir "${params.output_dir}/${dataset_id}/label_analysis", mode: 'copy'
 	conda "${baseDir}/envs/nextflow.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  || task.attempt < 3  ? 'retry' : 'finish' }   
 	maxRetries 3
@@ -124,6 +129,7 @@ process run_cell_types_eval {
 	input:
 	    tuple val(fold), file(test), file(train) from SPLIT_DATA
 	    file(marker_genes) from MARKERS
+	    val(dataset_id) from DATASET_ID 
 	output:
 	    set val(fold), file("tool_perf_table.tsv") into TOOL_PERF_TABLE
 	    set val(fold), file("tool_perf_pvals.tsv") into TOOL_TABLE_PVALS
@@ -158,25 +164,28 @@ OUT_CH = TOOL_PERF_TABLE.join(TOOL_TABLE_PVALS)
 
 // rename files to include fold number
 process rename_results{
-	publishDir "${params.output_dir}/${fold}", mode: 'copy'
+	publishDir "${params.output_dir}/${dataset_id}/${fold}", mode: 'copy'
   
 	input:
 	set val(fold), file(tool_perf_table), file(tool_perf_pvals) from OUT_CH
+	val(dataset_id) from DATASET_ID 
 	output:
-	set file("${fold}_${tool_perf_table}"), file("${fold}_${tool_perf_pvals}") into RENAMED_RESULTS
+	set file("${dataset_id}.${fold}.${tool_perf_table}"), file("${dataset_id}.${fold}.${tool_perf_pvals}") into RENAMED_RESULTS
 	
 	"""
-	mv ${tool_perf_table} ${fold}_${tool_perf_table}
-	mv ${tool_perf_pvals} ${fold}_${tool_perf_pvals}
+	mv ${tool_perf_table} ${dataset_id}.${fold}.${tool_perf_table}
+	mv ${tool_perf_pvals} ${dataset_id}.${fold}.${tool_perf_pvals}
 	"""
 }
 
 // combine results into a single directory
 process combine_results{
-	publishDir "${params.output_dir}", mode: 'copy'
+	publishDir "${params.output_dir}/${dataset_id}", mode: 'copy'
 	
 	input:
 	file(folds_output) from RENAMED_RESULTS.collect()
+	val(dataset_id) from DATASET_ID 
+	
 	output:
 	file('results_dir') into COMBINED_RESULTS_DIR
 	"""
@@ -190,7 +199,7 @@ process combine_results{
 
 // average folds output
 process average_folds_output {
-	publishDir "${params.output_dir}/final_output", mode: 'copy'
+	publishDir "${params.output_dir}/${dataset_id}/final_output", mode: 'copy'
 	conda "${baseDir}/envs/r-caret.yaml"
 	errorStrategy { task.exitStatus == 130 || task.exitStatus == 137  ? 'retry' : 'finish' }   
 	maxRetries 5
@@ -198,12 +207,14 @@ process average_folds_output {
 	
 	input:
 	file ('results_dir') from COMBINED_RESULTS_DIR
+	val(dataset_id) from DATASET_ID 
 	output:
-	    file("avg_tool_perf_table.tsv") into AVG_TOOL_PERF_TABLE 
-	    file("avg_tool_perf_pvals.tsv") into AVG_TOOL_PERF_PVALS
+	    file("${dataset_id}.avg_tool_perf_table.tsv") into AVG_TOOL_PERF_TABLE 
+	    file("${dataset_id}.avg_tool_perf_pvals.tsv") into AVG_TOOL_PERF_PVALS
 	"""
 	avg-tables-cell-label-analysis.R\
 		--input-dir ${results_dir}\
+	        --dataset-id ${dataset_id}\
 		--avg-tool-perf-table ${params.average_folds_output.avg_tool_perf_table}\
 		--avg-tool-perf-pvals ${params.average_folds_output.avg_tool_perf_pvals}
 	"""

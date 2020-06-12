@@ -58,5 +58,5 @@ colnames(mean_tool_perf_tables) <- replace(colnames(mean_tool_perf_tables), c(1)
 colnames(mean_tool_perf_pvals) <- replace(colnames(mean_tool_perf_pvals), c(1), c("Tool"))
 #save tables
 
-write.table(mean_tool_perf_tables, file=paste0(opt$dataset_id, "_", opt$avg_tool_perf_table), sep = "\t")
-write.table(mean_tool_perf_pvals, file=paste0(opt$dataset_id, "_", opt$avg_tool_perf_pvals), sep = "\t")
+write.table(mean_tool_perf_tables, file=paste0(opt$dataset_id, ".", opt$avg_tool_perf_table), sep = "\t")
+write.table(mean_tool_perf_pvals, file=paste0(opt$dataset_id, ".", opt$avg_tool_perf_pvals), sep = "\t")
