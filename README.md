@@ -86,6 +86,8 @@ Once the workflows are updated, we can **edit the `nextflow.config`** to:
 - Specify different parameters of the cell predictors, for instance: `scpred.model == 'svmRadialWeights'`
 - Enable/disable label analysis with the cell type predictions done by the methods.
 
+**Note:** `data_import.run` must be set to false, in order to prevent the child workflow from re-importing data, as we want to pass the already generated fold test-train data as input onto it.
+
 Finally we **run the pipeline** by issuing the following command: 
 ```
 nextflow run main.nf --profile cluster
