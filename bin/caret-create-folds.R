@@ -7,7 +7,7 @@ suppressPackageStartupMessages(require(workflowscriptscommon))
 # argument parsing 
 option_list = list(
   make_option(
-    c("-i", "--input-barcodes-tsv"),
+    c("-i", "--input-barcodes"),
     action = "store",
     default = NA,
     type = 'character',
@@ -36,11 +36,11 @@ option_list = list(
   )
 )
 
-opt = wsc_parse_args(option_list, mandatory = c("input_barcodes_tsv", "output_dir"))
+opt = wsc_parse_args(option_list, mandatory = c("input_barcodes", "output_dir"))
 
 # read SCE object
-if(!file.exists(opt$input_barcodes_tsv)) stop("Input file does not exist.")
-barcodes <- read.table(file=opt$input_barcodes_tsv, sep = "\t", header=T)
+if(!file.exists(opt$input_barcodes)) stop("Input file does not exist.")
+barcodes <- read.table(file=opt$input_barcodes, sep = "\t", header=T)
 # create Folds with cell indexes
 suppressPackageStartupMessages(require(caret))
 # list of folds with cell indexes
@@ -48,4 +48,4 @@ barcodes_index_list <- createFolds(y = 1:nrow(barcodes), k = opt$k_folds_number)
 print(barcodes_index_list)
 # save fold's barcode indices
 dir.create(opt$output_dir)
-for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, paste0(opt$dataset_id, "_fold_", i, ".rds")))}
+for (i in 1:length(barcodes_index_list)){saveRDS(barcodes_index_list[[i]], file=file.path(opt$output_dir, paste0(opt$dataset_id, ".fold_", i, ".indices.rds")))}

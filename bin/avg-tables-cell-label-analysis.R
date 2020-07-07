@@ -21,18 +21,18 @@ option_list = list(
     help = 'Dataset ID of the dataset used'
   ), 
   make_option(
-    c("-a", "--avg-tool-perf-table"),
+    c("-a", "--tool-perf-table"),
     action = "store",
-    default = "avg_tool_perf_table.tsv",
+    default = "tool_perf_table.tsv",
     type = 'character',
-    help = 'Cross-fold averaged tool performance table.'
+    help = 'Tool performance table suffix name.'
   ),
   make_option(
-    c("-v", "--avg-tool-perf-pvals"),
+    c("-v", "--tool-perf-pvals"),
     action = "store",
-    default = "avg_tool_perf_pvals.tsv",
+    default = "tool_perf_pvals.tsv",
     type = 'character',
-    help = 'Cross-fold averaged tool p values table.'
+    help = 'Tool p values table suffix name.'
   )
 )
 
@@ -41,10 +41,10 @@ opt = wsc_parse_args(option_list, mandatory = c("input_dir"))
 if(!file.exists(opt$input_dir)) stop("Input directory containing label-analysis outputs does not exist.")
 
 #read files
-tool_perf_tables_paths <- list.files(opt$input_dir, pattern="tool_perf_table", full.names=T)
+tool_perf_tables_paths <- list.files(opt$input_dir, pattern=opt$tool_perf_table, full.names=T)
 tool_perf_table_list <- lapply(tool_perf_tables_paths, FUN = function(x) read.table(x, header = T))
 
-tool_perf_tables_paths <- list.files(opt$input_dir, pattern="tool_perf_pvals", full.names=T)
+tool_perf_tables_paths <- list.files(opt$input_dir, pattern=opt$tool_perf_pvals, full.names=T)
 tool_perf_pvals_list <- lapply(tool_perf_tables_paths, FUN = function(x) read.table(x, header = T))
 
 #merge tables
@@ -57,6 +57,5 @@ mean_tool_perf_pvals <- aggregate(x = subset(merge_tool_perf_pvals, select = -c(
 colnames(mean_tool_perf_tables) <- replace(colnames(mean_tool_perf_tables), c(1), c("Tool"))
 colnames(mean_tool_perf_pvals) <- replace(colnames(mean_tool_perf_pvals), c(1), c("Tool"))
 #save tables
-
-write.table(mean_tool_perf_tables, file=paste0(opt$dataset_id, ".", opt$avg_tool_perf_table), sep = "\t")
-write.table(mean_tool_perf_pvals, file=paste0(opt$dataset_id, ".", opt$avg_tool_perf_pvals), sep = "\t")
+write.table(mean_tool_perf_tables, file=paste0(opt$dataset_id, ".avg.", opt$tool_perf_table), sep = "\t")
+write.table(mean_tool_perf_pvals, file=paste0(opt$dataset_id, ".avg.", opt$tool_perf_pvals), sep = "\t")
