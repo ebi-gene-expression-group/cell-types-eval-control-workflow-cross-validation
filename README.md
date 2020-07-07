@@ -55,6 +55,6 @@ nextflow run main.nf --profile cluster -resume
 ```
 
 ### Results
-The final output of the workflow are 2 tables containing the metrics of the label analysis of the cell predictions averaged for all folds (as defined by `fold_k`), and it's associated significances. See an final output example [here](https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/blob/develop/output).
+The final output of the workflow are 2 tables containing the metrics of the label analysis of the cell predictions averaged for all folds (as defined by `fold_k`), and it's associated significances. See an final output example [here](https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/tree/master/example_output).
 
 These, and additional outputs (fold data splitting, individual fold label analysis) are stored in the directory `output_dir/dataset_id` being `output_dir` defined in the config file. 
