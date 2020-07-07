@@ -60,7 +60,6 @@ The final output of the workflow are 2 tables containing the metrics of the labe
 
 These, and additional outputs (fold data splitting, individual fold label analysis) are stored in the directory `output_dir/dataset_id` being `output_dir` defined in the config file. 
 
-
 ### Example Run on dataset E-ENAD-27
 Here is an example on how to run the pipeline on SCXA dataset `E-ENAD-27`. 
 
@@ -85,6 +84,7 @@ Once the workflows are updated, we can **edit the `nextflow.config`** to:
 **Note:** Current values of matrix type for each tool are those recommended by the authors.
 - Specify different parameters of the cell predictors, for instance: `scpred.model == 'svmRadialWeights'`
 - Enable/disable label analysis with the cell type predictions done by the methods.
+
 
 **Note:** `data_import.run` must be set to false, in order to prevent the child workflow from re-importing data, as we want to pass the already generated fold test-train data as input onto it.
 
