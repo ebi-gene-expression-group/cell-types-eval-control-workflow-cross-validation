@@ -1,0 +1,3 @@
+[submodule "cell-types-eval-control-workflow"]
+	path = cell-types-eval-control-workflow
+	url = https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow
