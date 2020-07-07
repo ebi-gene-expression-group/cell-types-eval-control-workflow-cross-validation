@@ -55,6 +55,43 @@ nextflow run main.nf --profile cluster -resume
 ```
 
 ### Results
-The final output of the workflow are 2 tables containing the metrics of the label analysis of the cell predictions averaged for all folds (as defined by `fold_k`), and it's associated significances. See an final output example [here](https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/tree/master/example_output).
+The final output of the workflow are 2 tables containing the metrics of the label analysis of the cell predictions averaged for all folds (as defined by `fold_k`), and it's associated significances. See an final output example [here](https://raw.githubusercontent.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/master/datasets.txt).
 
 These, and additional outputs (fold data splitting, individual fold label analysis) are stored in the directory `output_dir/dataset_id` being `output_dir` defined in the config file. 
+
+### Example Run on dataset E-ENAD-27
+Here is an example on how to run the pipeline on SCXA dataset `E-ENAD-27`. 
+
+First of all we must specify the `dataset id`, `technology type`, `matrix type`, `number of clusters in marker gene file`, `barcode column`, and `cell type column` in a CSV file (located in the same directory where the pipeline is going to be run): 
+```
+E-ENAD-27,smart-seq,7,id,inferred.cell.type
+```
+
+Next, running the following command will **pull the latest version** of the cross-validation workflow and it's nested components:
+```
+./bin/fetch-control-and-tool-eval-workflows.sh
+```
+
+Once the workflows are updated, we can **edit the `nextflow.config`** to: 
+- Specify the output directory: `output_dir`
+- Edit the metadata fields of the imported SDRF file.
+- Specify wether we want SDRF file to be unmelt: `unmelt_sdrf.run`.
+- Specify the number of folds to split the data to perform cross validation: `generate_folds.folds_k`
+- Enable/disable the different cell predictors: `scpred.run`, `scmap_cluster.run` ...
+- Specify the matrix type required by each cell predictor: `scpred.matrix_type`,  `scmap_cluster.matrix_type`...
+
+**Note:** Current values of matrix type for each tool are those recommended by the authors.
+- Specify different parameters of the cell predictors, for instance: `scpred.model == 'svmRadialWeights'`
+- Enable/disable label analysis with the cell type predictions done by the methods.
+
+Finally we **run the pipeline** by issuing the following command: 
+```
+nextflow run main.nf --profile cluster
+```
+
+Once the execution is finalized we will find the following **outputs** in a directory named with the `dataset id` within the defined `output_dir`: 
+- `/fold_indices`: Containing `.rds` files with the cell indexes for each of the folds.
+- `/split_data`: Containing the test-train data split for each fold based. 
+- `/label_analysis`: Containing the results of the label analysis for each fold. 
+- `/final_output`: Containing the all-fold's average results tables.
+
