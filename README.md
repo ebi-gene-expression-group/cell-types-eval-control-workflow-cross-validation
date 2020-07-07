@@ -55,6 +55,7 @@ nextflow run main.nf --profile cluster -resume
 ```
 
 ### Results
+
 The final output of the workflow are 2 tables containing the metrics of the label analysis of the cell predictions averaged for all folds (as defined by `fold_k`), and it's associated significances. See an final output example [here](https://github.com/ebi-gene-expression-group/cell-types-eval-control-workflow-cross-validation/tree/master/example_output).
 
 These, and additional outputs (fold data splitting, individual fold label analysis) are stored in the directory `output_dir/dataset_id` being `output_dir` defined in the config file. 
@@ -83,6 +84,9 @@ Once the workflows are updated, we can **edit the `nextflow.config`** to:
 **Note:** Current values of matrix type for each tool are those recommended by the authors.
 - Specify different parameters of the cell predictors, for instance: `scpred.model == 'svmRadialWeights'`
 - Enable/disable label analysis with the cell type predictions done by the methods.
+
+
+**Note:** `data_import.run` must be set to false, in order to prevent the child workflow from re-importing data, as we want to pass the already generated fold test-train data as input onto it.
 
 Finally we **run the pipeline** by issuing the following command: 
 ```
